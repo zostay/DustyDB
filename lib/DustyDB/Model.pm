@@ -100,45 +100,6 @@ Load a record object from the disk.
 
 =cut
 
-sub _build_key {
-    my $self = shift;
-    my %keys;
-
-    # We have a record that needs to be decomposed
-    if (blessed $_[0] and $_[0]->isa($self->class_name)) {
-        for my $key (@{ $self->_primary_key($_[0]) }) {
-            $keys{ $key->name } = $key->get_value($_[0]);
-        }
-    }
-
-    # A single argument and a single column key
-    elsif (@_ == 1 and @{ $self->_primary_key($self->class_name) } == 1) {
-        $keys{ $self->_primary_key($self->class_name)->[0]->name } = $_[0];
-    }
-    
-    # A multi-column key must be given with a hashref
-    else {
-        %keys = @_;
-    }
-
-    return \%keys;
-}
-
-sub _build_que {
-    my $self = shift;
-    my $keys = shift;
-
-    # Setup the lookup que
-    my @que;
-    for my $key (@{ $self->_primary_key($self->class_name) }) {
-        confess qq(cannot store when column "@{[ $key->name ]}" is undefined.\n)
-            if not defined $keys->{ $key->name };
-        push @que, $keys->{ $key->name };
-    }
-
-    return \@que;
-}
-
 sub load {
     my $self = shift;
 
@@ -179,6 +140,45 @@ sub load {
 
     # ... and serve
     return $self->class_name->new( %params );
+}
+
+sub _build_key {
+    my $self = shift;
+    my %keys;
+
+    # We have a record that needs to be decomposed
+    if (blessed $_[0] and $_[0]->isa($self->class_name)) {
+        for my $key (@{ $self->_primary_key($_[0]) }) {
+            $keys{ $key->name } = $key->get_value($_[0]);
+        }
+    }
+
+    # A single argument and a single column key
+    elsif (@_ == 1 and @{ $self->_primary_key($self->class_name) } == 1) {
+        $keys{ $self->_primary_key($self->class_name)->[0]->name } = $_[0];
+    }
+    
+    # A multi-column key must be given with a hashref
+    else {
+        %keys = @_;
+    }
+
+    return \%keys;
+}
+
+sub _build_que {
+    my $self = shift;
+    my $keys = shift;
+
+    # Setup the lookup que
+    my @que;
+    for my $key (@{ $self->_primary_key($self->class_name) }) {
+        confess qq(cannot store when column "@{[ $key->name ]}" is undefined.\n)
+            if not defined $keys->{ $key->name };
+        push @que, $keys->{ $key->name };
+    }
+
+    return \@que;
 }
 
 sub _init {
