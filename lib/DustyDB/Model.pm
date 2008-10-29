@@ -16,6 +16,9 @@ DustyDB::Model - model classes represent the tables in your database
   # Create a record
   my $schwartz = $author->create( name => 'Randall Schwartz' );
 
+  # New record that hasn't been saved yet
+  my $chromatic = $author->construct( name => 'chromatic' );
+
   # Load a record from the disk
   my $the_damian = $author->load( 'Damian Conway' );
 
@@ -63,6 +66,19 @@ sub _primary_key {
     return [ grep { $_->does('DustyDB::Key') } @attr ];
 }
 
+=head2 construct
+
+Create a new record object in memory only. You need to call L<DustyDB::Record/save> on the record to store it. The parameters are passed directly to the constructor for the record.
+
+=cut
+
+sub construct {
+    my $self = shift;
+
+    my %params = ( @_, model => $self );
+    return $self->class_name->new( %params );
+}
+
 =head2 create
 
 Create a new record object and save it. The parameters are passed to the constructor for the record.
@@ -72,8 +88,7 @@ Create a new record object and save it. The parameters are passed to the constru
 sub create {
     my $self = shift;
 
-    my %params = ( @_, model => $self );
-    my $object = $self->class_name->new( %params );
+    my $object = $self->construct(@_);
     $object->save;
 
     return $object;
