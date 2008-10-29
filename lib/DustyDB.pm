@@ -116,6 +116,34 @@ sub model {
     return DustyDB::Model->new( db => $self, class_name => $class_name );
 }
 
+=head1 INTERNAL METHODS
+
+=head2 table
+
+Do not use this method unless you really need to. The regular interface is provided through L</model>. This provides access to the table of records in the database.
+
+=cut
+
+sub table {
+    my ($self, $table) = @_;
+    return $self->dbm->{'models'}{$table};
+}
+
+=head2 init_table
+
+Do not use this method unless you really need to. This is used to perform some bootstrapping of the table in the database.
+
+=cut
+
+sub init_table {
+    my ($self, $table) = @_;
+
+    # Make sure the database and table are initialized
+    $self->dbm->{'models'} = {} 
+        unless defined $self->dbm->{'models'};
+    $self->dbm->{'models'}{$table} = {}
+        unless defined $self->dbm->{'models'}{$table};
+}
 
 =head1 MODULE NAME
 
