@@ -116,7 +116,6 @@ sub model {
     return DustyDB::Model->new( db => $self, class_name => $class_name );
 }
 
-=head2 collection 
 
 =head1 MODULE NAME
 
