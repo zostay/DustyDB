@@ -53,6 +53,7 @@ has db => (
     is       => 'rw',
     isa      => 'DustyDB',
     required => 1,
+    handles  => [ qw( model table init_table ) ],
 );
 
 =head1 METHODS
@@ -103,12 +104,12 @@ Load a record object from the disk.
 sub load {
     my $self = shift;
 
-    $self->_init;
+    $self->init_table($self->class_name);
     my $keys = $self->_build_key(@_);
     my $que  = $self->_build_que($keys);
     
     # Fetch the record from the database
-    my $object = $self->db->dbm->{'models'}{ $self->class_name };
+    my $object = $self->table( $self->class_name );
     for my $que_entry (@$que) {
         return unless ref $object and reftype $object eq 'HASH';
 
@@ -132,7 +133,7 @@ sub load {
                 and defined $params{ $attr->name }{'class_name'}) {
 
             my $class_name = $params{ $attr->name }{'class_name'};
-            my $other_model = $self->db->model( $class_name );
+            my $other_model = $self->model( $class_name );
             my $object = $other_model->load( %{ $params{ $attr->name } } );
             $params{ $attr->name } = $object;
         }
@@ -181,28 +182,18 @@ sub _build_que {
     return \@que;
 }
 
-sub _init {
-    my $self = shift;
-
-    # Make sure the database and table are initialized
-    $self->db->dbm->{'models'} = {} 
-        unless defined $self->db->dbm->{'models'};
-    $self->db->dbm->{'models'}{ $self->class_name } = {}
-        unless  defined $self->db->dbm->{'models'}{ $self->class_name };
-}
-
 sub save {
     my $self   = shift;
     my $record = shift;
 
-    $self->_init;
+    $self->init_table($self->class_name);
     my $keys   = $self->_build_key($record);
     my $que    = $self->_build_que($keys);
 
     my $last_que = pop @$que;
     my $que_remaining = scalar @$que;
 
-    my $object = $self->db->dbm->{'models'}{ $self->class_name };
+    my $object = $self->table( $self->class_name );
     for my $que_entry (@$que) {
         if (defined $object->{$que_entry}) {
 
@@ -250,13 +241,13 @@ sub save {
 sub delete {
     my $self = shift;
 
-    $self->_init;
+    $self->init_table($self->class_name);
     my $keys = $self->_build_key(@_);
     my $que  = $self->_build_que($keys);
     
     my $last_que = pop @$que;
 
-    my $object = $self->db->dbm->{'models'}{ $self->class_name };
+    my $object = $self->table( $self->class_name );
     for my $que_entry (@$que) {
         if (defined $object->{$que_entry}) {
             $object = $object->{$que_entry};
