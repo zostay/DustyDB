@@ -3,7 +3,7 @@ use warnings;
 
 =head1 NAME
 
-t/05-general.t - quick and dirty general test of things
+basic.t - quick and dirty general test of things
 
 =cut
 
@@ -30,7 +30,7 @@ has author => ( is => 'rw', isa => 'Author' );
 package main;
 
 # Create/connect to the database
-my $db = DustyDB->new( path => 't/05-general.db' );
+my $db = DustyDB->new( path => 't/basic.db' );
 ok($db, 'Loaded the database object');
 isa_ok($db, 'DustyDB');
 
@@ -104,4 +104,4 @@ isa_ok($book, 'DustyDB::Model');
     is($pbp, undef, 'no book found');
 }
 
-unlink 't/05-general.db';
+unlink 't/basic.db';
