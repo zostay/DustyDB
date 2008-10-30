@@ -219,7 +219,12 @@ sub save {
     my $hash = {};
     for my $attr (values %{ $record->meta->get_attribute_map }) {
         next if $attr->name eq 'model';
+
+        # Load the value itself
         my $value = $attr->get_value($record);
+
+        # Skip on undef since this can cause things to go amuck at load
+        next unless defined $value;
 
         # If this is another record, just store the key
         if (blessed $value and $value->can('does') and $value->does('DustyDB::Record')) {
