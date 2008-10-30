@@ -9,18 +9,24 @@ use DustyDB::Model;
 use DustyDB::Record;
 use DustyDB::Collection;
 
+=head1 NAME
+
+DustyDB - yet another Moose-based object database
+
 =head1 SYNOPSIS
 
   # Declare a model
   package Book;
-  use Moose -traits => 'DustyDB::Record';
+  use Moose;
+  with 'DustyDB::Record';
 
   has title  => ( is => 'rw', isa => 'Str',   traits => [ 'DustyDB::Key' ] );
   has author => ( is => 'rw', isa => 'Author' );
 
   # Declare another model
   package Author;
-  use Moose -traits => 'DustyDB::Record';
+  use Moose;
+  with 'DustyDB::Record';
 
   has name => ( is => 'rw', isa => 'Str',     traits => [ 'DustyDB::Key' ] );
 
@@ -37,8 +43,8 @@ use DustyDB::Collection;
 
   {
       # Create a couple records
-      my $the_damian = $author->new( name => 'Damian Conway' );
-      my $pbp        = $book->new( 
+      my $the_damian = $author->construct( name => 'Damian Conway' );
+      my $pbp        = $book->construct( 
           title  => 'Perl Best Practices', 
           author => $the_damian,
       );
@@ -46,6 +52,8 @@ use DustyDB::Collection;
       # Save them to the database
       $the_damian->save;
       $pbp->save;
+
+      # See also create() to do construct()->save()
   }
 
   {
@@ -60,6 +68,18 @@ use DustyDB::Collection;
       # Delete them
       $the_damian->delete;
       $pbp->delete;
+  }
+
+  {
+      # Collections of records
+      my @all_authors = $author->all;
+      my @some_books  = $book->all_where( title => qr/^[A-M]/i );
+
+      # Iterate through records
+      my $iter = $author->all;
+      while (my $an_author = $author->next) {
+          print "Author: ", $an_author->name, "\n";
+      }
   }
 
 =head1 DESCRIPTION
