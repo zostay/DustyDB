@@ -22,6 +22,16 @@ DustyDB::Model - model classes represent the tables in your database
   # Load a record from the disk
   my $the_damian = $author->load( 'Damian Conway' );
 
+  # Load all/many of the records
+  my @authors = $author->all;
+  my @d_authors = $author->all_where( name => qr/^d/i );
+
+  # Or as an iterator
+  my $authors = $autor->all;
+  while (my $author = $authors->next) {
+      print " - ", $author->name, "\n";
+  }
+
   # Delete the record
   $schwartz->delete;
 
@@ -142,6 +152,25 @@ sub load {
     # ... and serve
     return $self->class_name->new( %params );
 }
+
+=head2 all
+
+=head2 all_where
+
+The L</all> and L</all_where> are synonyms. In list context, they will return a list of zero or more records. In scalar context they will return a L<DustyDB::Collection> object. These methods will accept the same arguments as the L<DustyDB::Collection/filter> method of that class.
+
+=cut
+
+sub all {
+    my $self = shift;
+
+    my $collection = DustyDB::Collection->new( model => $self );
+    $collection->filter(@_) if @_;
+
+    return $collection->contextual;
+}
+
+*all_where = *all;
 
 sub _build_key {
     my $self = shift;

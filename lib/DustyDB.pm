@@ -7,6 +7,7 @@ use DBM::Deep;
 use DustyDB::Key;
 use DustyDB::Model;
 use DustyDB::Record;
+use DustyDB::Collection;
 
 =head1 SYNOPSIS
 
