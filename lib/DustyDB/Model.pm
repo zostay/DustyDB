@@ -179,18 +179,24 @@ sub _build_key {
     # We have a record that needs to be decomposed
     if (blessed $_[0] and $_[0]->isa($self->class_name)) {
         for my $key (@{ $self->_primary_key($_[0]) }) {
-            $keys{ $key->name } = $key->get_value($_[0]);
+            $keys{ $key->name } 
+                = $key->perform_stringify($key->get_value($_[0]));
         }
     }
 
     # A single argument and a single column key
     elsif (@_ == 1 and @{ $self->_primary_key($self->class_name) } == 1) {
-        $keys{ $self->_primary_key($self->class_name)->[0]->name } = $_[0];
+        my $key = $self->_primary_key($self->class_name)->[0];
+        $keys{ $key->name } = $key->perform_stringify($_[0]);
     }
     
     # A multi-column key must be given with a hashref
     else {
-        %keys = @_;
+        my %params = @_;
+        for my $key (@{ $self->_primary_key($self->class_name) }) {
+            $keys{ $key->name } 
+                = $key->perform_stringify($params{ $key->name });
+        }
     }
 
     return \%keys;
