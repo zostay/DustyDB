@@ -153,6 +153,58 @@ sub load {
     return $self->class_name->new( %params );
 }
 
+=head2 load_or_create
+
+Load or create the object. It will use the keys in the given parameter hash to try and load an object. If that fails, it will use all the parameters to construct a new record and save it.
+
+=cut
+
+sub load_or_create {
+    my ($self, %params) = @_;
+
+    my $object = $self->load(%params);
+    return $object if defined $object;
+
+    return $self->create(%params);
+}
+
+=head2 load_and_update_or_create
+
+This is similar to L</load_or_create>, but it will also make sure that all of the passed parameters are set on the loaded object as well.
+
+=cut
+
+sub load_and_update_or_create {
+    my ($self, %params) = @_;
+
+    # Do we have one of these things already?
+    my $object = $self->load(%params);
+    if (defined $object) {
+
+        # Make sure the new values are set
+        for my $attr (values %{ $object->meta->get_attribute_map }) {
+            next if $attr->does('DustyDB::Key'); # Don't muck the key
+
+            # We want to set it to something
+            if (defined $params{ $attr->name }) {
+                $attr->set_value($object, $params{ $attr->name });
+            }
+
+            # We want to clear it, if set
+            else {
+                $attr->clear_value($object);
+            }
+
+            # Bake and serve
+            $object->save;
+            return $object;
+        }
+    }
+
+    # Nope, no such thing... make a thing
+    return $self->create(%params);
+}
+
 =head2 all
 
 =head2 all_where
