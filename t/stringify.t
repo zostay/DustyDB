@@ -3,11 +3,11 @@ use warnings;
 
 =head1 NAME
 
-stringy.t - test of the stringify attribute on DustyDB::Key
+stringify.t - test of the stringify attribute on DustyDB::Key
 
 =cut
 
-use Test::More tests => 8;
+use Test::More tests => 9;
 use_ok('DustyDB');
 
 # Declare a model
@@ -32,7 +32,7 @@ has name => (
 
 package main;
 
-my $db = DustyDB->new( path => 't/stringify.t' );
+my $db = DustyDB->new( path => 't/stringify.db' );
 ok($db, 'Loaded the database object');
 isa_ok($db, 'DustyDB');
 
@@ -48,9 +48,12 @@ is(Rot13->meta->get_attribute_map->{name}->perform_stringify('Testing'),
     is($rot13_thing->name, 'Testing', 'name is still Testing');
 }
 
+ok(defined $db->dbm->{'models'}{'Rot13'}{'Gvhgrmt'}, 'Gvhgrmt is stored');
+
 {
     my $rot13_thing = $rot13->load( name => 'Testing' );
     ok($rot13_thing, 'loaded Testing with Testing');
     is($rot13_thing->name, 'Testing', 'name is again Testing');
 }
 
+unlink 't/stringify.db';
