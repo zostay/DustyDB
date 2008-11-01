@@ -147,6 +147,12 @@ sub load {
             my $object = $other_model->load( %{ $params{ $attr->name } } );
             $params{ $attr->name } = $object;
         }
+
+        # Otherwise try to decode if needed
+        else {
+            $params{ $attr->name } 
+                = _perform_decode( $attr, $params{ $attr->name } );
+        }
     }
 
     # ... and serve
@@ -269,6 +275,26 @@ sub _build_que {
     return \@que;
 }
 
+sub _perform_encode {
+    my ($attr, $value) = @_;
+
+    if ($attr->does('DustyDB::Filter')) {
+        return $attr->perform_encode($value);
+    }
+
+    return $value;
+}
+
+sub _perform_decode {
+    my ($attr, $value) = @_;
+
+    if ($attr->does('DustyDB::Filter')) {
+        return $attr->perform_decode($value);
+    }
+
+    return $value;
+}
+
 sub save {
     my $self   = shift;
     my $record = shift;
@@ -308,7 +334,7 @@ sub save {
         next if $attr->name eq 'model';
 
         # Load the value itself
-        my $value = $attr->get_value($record);
+        my $value = _perform_encode( $attr, $attr->get_value($record) );
 
         # Skip on undef since this can cause things to go amuck at load
         next unless defined $value;
