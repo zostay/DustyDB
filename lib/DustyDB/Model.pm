@@ -1,8 +1,6 @@
 package DustyDB::Model;
 use Moose;
 
-use Scalar::Util qw( blessed reftype );
-
 =head1 NAME
 
 DustyDB::Model - model classes represent the tables in your database
@@ -41,18 +39,6 @@ This class is the bridge between the storage database and the records in it. Nor
 
 =head1 ATTRIBUTES
 
-=head2 class_name
-
-This is the record package.
-
-=cut
-
-has class_name => (
-    is       => 'rw',
-    isa      => 'ClassName',
-    required => 1,
-);
-
 =head2 db
 
 This is the L<DustyDB> that owns this model instance.
@@ -63,328 +49,153 @@ has db => (
     is       => 'rw',
     isa      => 'DustyDB',
     required => 1,
-    handles  => [ qw( model table init_table ) ],
+    handles  => [ qw( dbm ) ],
+);
+
+=head2 record_meta
+
+This is the meta-class for something that does L<DustyDB::Record>.
+
+=cut
+
+has record_meta => (
+    is       => 'rw',
+    isa      => 'Object',
+    does     => 'DustyDB::Meta::Class',
+    required => 1,
 );
 
 =head1 METHODS
 
-=cut
-
-sub _primary_key {
-    my $model = shift;
-    my $self  = shift;
-    my @attr = values %{ $self->meta->get_attribute_map };
-    return [ grep { $_->does('DustyDB::Key') } @attr ];
-}
-
 =head2 construct
 
-Create a new record object in memory only. You need to call L<DustyDB::Record/save> on the record to store it. The parameters are passed directly to the constructor for the record.
+  my $record = $model->construct( %params );
+
+This constructs an object, but does not save it.
 
 =cut
 
 sub construct {
-    my $self = shift;
+    my ($self, %params) = @_;
 
-    my %params = ( @_, model => $self );
-    return $self->class_name->new( %params );
+    # Create the record
+    my $record = $self->record_meta->create_instance(
+        model => $self,
+        %params,
+    );
+
+    return $record;
 }
 
 =head2 create
 
-Create a new record object and save it. The parameters are passed to the constructor for the record.
+  my $record = $model->create( %params );
+
+This is essentially just sugar for:
+
+  my $record = $model->construct( %params );
+  $record->save;
+
+This constructs the record and saves it to the database.
 
 =cut
 
 sub create {
-    my $self = shift;
+    my ($self, %params) = @_;
 
-    my $object = $self->construct(@_);
-    $object->save;
+    # Create the record and save
+    my $record = $self->record_meta->create_instance(
+        model => $self,
+        %params,
+    );
+    $record->save;
 
-    return $object;
+    return $record;
 }
 
 =head2 load
 
-Load a record object from the disk.
+  my $record = $model->load( %key );
+
+Given the names and values of key parameters, this will load an object from the database.
 
 =cut
 
 sub load {
-    my $self = shift;
+    my ($self, %params) = @_;
 
-    $self->init_table($self->class_name);
-    my $keys = $self->_build_key(@_);
-    my $que  = $self->_build_que($keys);
-    
-    # Fetch the record from the database
-    my $object = $self->table( $self->class_name );
-    for my $que_entry (@$que) {
-        return unless ref $object and reftype $object eq 'HASH';
+    # Load the record
+    my $record = $self->record_meta->load_instance(
+        model => $self,
+        %params,
+    );
 
-        if (defined $object->{$que_entry}) {
-            $object = $object->{$que_entry};
-        }
-
-        else {
-            return;
-        }
-    }
-
-    # Bake the model
-    my %params = ( %$object, model => $self );
-    for my $attr (values %{ $self->class_name->meta->get_attribute_map }) {
-        next if $attr->name eq 'model';
-
-        # If this is another record, load it first
-        if (ref $params{ $attr->name} 
-                and reftype $params{ $attr->name } eq 'HASH'
-                and defined $params{ $attr->name }{'class_name'}) {
-
-            my $class_name = $params{ $attr->name }{'class_name'};
-            my $other_model = $self->model( $class_name );
-            my $object = $other_model->load( %{ $params{ $attr->name } } );
-            $params{ $attr->name } = $object;
-        }
-
-        # Otherwise try to decode if needed
-        else {
-            $params{ $attr->name } 
-                = _perform_decode( $attr, $params{ $attr->name } );
-        }
-    }
-
-    # ... and serve
-    return $self->class_name->new( %params );
+    return $record;
 }
 
 =head2 load_or_create
 
-Load or create the object. It will use the keys in the given parameter hash to try and load an object. If that fails, it will use all the parameters to construct a new record and save it.
+  my $record = $model->load_or_create( %params );
+
+Given the record attributes, it uses the key parameters given to load an object if such an object exists. If not, the object will be created using the parameters given.
 
 =cut
 
 sub load_or_create {
     my ($self, %params) = @_;
 
-    my $object = $self->load(%params);
-    return $object if defined $object;
+    # Load the record, if possible
+    my $record = $self->load( %params );
+    return $record if $record;
 
-    return $self->create(%params);
+    # Not found? Create it
+    return $self->create( %params );
 }
 
-=head2 load_and_update_or_create
+=head2 save
 
-This is similar to L</load_or_create>, but it will also make sure that all of the passed parameters are set on the loaded object as well.
+  my $record = $model->save( %params );
+
+  # Or the more verbose synonym
+  my $record = $model->load_and_update_or_create( %params );
+
+Given the record attributes, it uses the key parameters given to load an object, if such an object can be found. If found, it will overwrite all the non-key parameters with the values given (and clear those that aren't given) and then save the object. If not found, it will create an object using the record attributes given.
 
 =cut
-
-sub load_and_update_or_create {
-    my ($self, %params) = @_;
-
-    # Do we have one of these things already?
-    my $object = $self->load(%params);
-    if (defined $object) {
-
-        # Make sure the new values are set
-        for my $attr (values %{ $object->meta->get_attribute_map }) {
-            next if $attr->does('DustyDB::Key'); # Don't muck the key
-
-            # We want to set it to something
-            if (defined $params{ $attr->name }) {
-                $attr->set_value($object, $params{ $attr->name });
-            }
-
-            # We want to clear it, if set
-            else {
-                $attr->clear_value($object);
-            }
-
-            # Bake and serve
-            $object->save;
-            return $object;
-        }
-    }
-
-    # Nope, no such thing... make a thing
-    return $self->create(%params);
-}
-
-=head2 all
-
-=head2 all_where
-
-The L</all> and L</all_where> are synonyms. In list context, they will return a list of zero or more records. In scalar context they will return a L<DustyDB::Collection> object. These methods will accept the same arguments as the L<DustyDB::Collection/filter> method of that class.
-
-=cut
-
-sub all {
-    my $self = shift;
-
-    my $collection = DustyDB::Collection->new( model => $self );
-    $collection->filter(@_) if @_;
-
-    return $collection->contextual;
-}
-
-*all_where = *all;
-
-sub _build_key {
-    my $self = shift;
-    my %keys;
-
-    # We have a record that needs to be decomposed
-    if (blessed $_[0] and $_[0]->isa($self->class_name)) {
-        for my $key (@{ $self->_primary_key($_[0]) }) {
-            $keys{ $key->name } 
-                = $key->perform_stringify($key->get_value($_[0]));
-        }
-    }
-
-    # A single argument and a single column key
-    elsif (@_ == 1 and @{ $self->_primary_key($self->class_name) } == 1) {
-        my $key = $self->_primary_key($self->class_name)->[0];
-        $keys{ $key->name } = $key->perform_stringify($_[0]);
-    }
-    
-    # A multi-column key must be given with a hashref
-    else {
-        my %params = @_;
-        for my $key (@{ $self->_primary_key($self->class_name) }) {
-            $keys{ $key->name } 
-                = $key->perform_stringify($params{ $key->name });
-        }
-    }
-
-    return \%keys;
-}
-
-sub _build_que {
-    my $self = shift;
-    my $keys = shift;
-
-    # Setup the lookup que
-    my @que;
-    for my $key (@{ $self->_primary_key($self->class_name) }) {
-        confess qq(cannot store when column "@{[ $key->name ]}" is undefined.\n)
-            if not defined $keys->{ $key->name };
-        push @que, $keys->{ $key->name };
-    }
-
-    return \@que;
-}
-
-sub _perform_encode {
-    my ($attr, $value) = @_;
-
-    if ($attr->does('DustyDB::Filter')) {
-        return $attr->perform_encode($value);
-    }
-
-    return $value;
-}
-
-sub _perform_decode {
-    my ($attr, $value) = @_;
-
-    if ($attr->does('DustyDB::Filter')) {
-        return $attr->perform_decode($value);
-    }
-
-    return $value;
-}
 
 sub save {
-    my $self   = shift;
-    my $record = shift;
+    my ($self, %params) = @_;
 
-    $self->init_table($self->class_name);
-    my $keys   = $self->_build_key($record);
-    my $que    = $self->_build_que($keys);
+    # Try to load the record
+    my $record = $self->load( %params );
 
-    my $last_que = pop @$que;
-    my $que_remaining = scalar @$que;
+    # Did we find one?
+    if ($record) {
 
-    my $object = $self->table( $self->class_name );
-    for my $que_entry (@$que) {
-        if (defined $object->{$que_entry}) {
+        # Update every attribute
+        for my $attr (values %{ $self->record_meta->get_attribute_map }) {
+            next if $attr->name eq 'model';
 
-            if ($que_remaining == 0 
-                    or (ref $object->{$que_entry} 
-                        and reftype $object->{$que_entry} eq 'HASH')) {
-                $object = $object->{$que_entry};
+            # If the parameter is defined, set it
+            if (defined $params{ $attr->name }) {
+                $attr->set_value($record, $params{ $attr->name });
             }
-            
-            # overwrite previous non-hash fact with something more agreeable
+
+            # If the parameter is not defined, clear it
             else {
-                $object = $object->{$que_entry} = {}
+                $attr->clear_value($record);
             }
         }
 
-        else {
-            $object = $object->{$que_entry} = {};
-        }
-
-        $que_remaining--;
+        # Save it and then return
+        $record->save;
+        return $record;
     }
 
-    my $hash = {};
-    for my $attr (values %{ $record->meta->get_attribute_map }) {
-        next if $attr->name eq 'model';
-
-        # Load the value itself
-        my $value = _perform_encode( $attr, $attr->get_value($record) );
-
-        # Skip on undef since this can cause things to go amuck at load
-        next unless defined $value;
-
-        # If this is another record, just store the key
-        if (blessed $value and $value->can('does') and $value->does('DustyDB::Record')) {
-            $hash->{ $attr->name } = $value->save;
-        }
-
-        # Otherwise, store the thingy
-        else {
-            $hash->{ $attr->name } = $value;
-        }
-    }
-
-    $object->{$last_que} = $hash;
-    
-    $keys->{class_name} = $self->class_name;
-    return $keys;
+    # No such record found, we need to create it
+    return $self->create( %params );
 }
 
-sub delete {
-    my $self = shift;
-
-    $self->init_table($self->class_name);
-    my $keys = $self->_build_key(@_);
-    my $que  = $self->_build_que($keys);
-    
-    my $last_que = pop @$que;
-
-    my $object = $self->table( $self->class_name );
-    for my $que_entry (@$que) {
-        if (defined $object->{$que_entry}) {
-            $object = $object->{$que_entry};
-        }
-        else {
-            return;
-        }
-    }
-
-    delete $object->{$last_que};
-}
-
-=begin Pod::Coverage
-
-  save
-  delete
-
-=end Pod::Coverage
-
-=cut
+*load_and_update_or_create = *save;
 
 1;
