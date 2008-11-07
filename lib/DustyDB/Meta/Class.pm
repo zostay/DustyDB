@@ -57,32 +57,32 @@ sub load_instance {
     }
 
     # Bake the model
-    my %params = ( %$object, db => $db );
+    my %object_params = ( %$object, db => $db );
     for my $attr (values %{ $meta->get_attribute_map }) {
         # TODO use a non-saved marker role instead of this crass hack
         next if $attr->name eq 'db';
 
         # If this is another record, load it first
-        if (defined $params{ $attr->name }
-                and ref $params{ $attr->name } 
-                and reftype $params{ $attr->name } eq 'HASH'
-                and defined $params{ $attr->name }{'class_name'}) {
+        if (defined $object_params{ $attr->name }
+                and ref $object_params{ $attr->name } 
+                and reftype $object_params{ $attr->name } eq 'HASH'
+                and defined $object_params{ $attr->name }{'class_name'}) {
 
-            my $class_name = $params{ $attr->name }{'class_name'};
+            my $class_name = $object_params{ $attr->name }{'class_name'};
             my $other_model = $db->model( $class_name );
-            my $object = $other_model->load( %{ $params{ $attr->name } } );
-            $params{ $attr->name } = $object;
+            my $object = $other_model->load( %{ $object_params{ $attr->name } } );
+            $object_params{ $attr->name } = $object;
         }
 
         # Otherwise try to decode if needed
-        elsif (defined $params{ $attr->name }) {
-            $params{ $attr->name } 
-                = $attr->perform_decode( $params{ $attr->name } );
+        elsif (defined $object_params{ $attr->name }) {
+            $object_params{ $attr->name } 
+                = $attr->perform_decode( $object_params{ $attr->name } );
         }
     }
 
     # ... and serve
-    return $meta->create_instance( %params );
+    return $meta->create_instance( %object_params );
 }
 
 sub _build_key {
@@ -148,8 +148,8 @@ sub save_instance {
 
     # Bootstrap if we need to and setup the que
     $db->init_table($meta->name);
-    my $keys = $self->_build_key($record);
-    my $que  = $self->_build_que($keys);
+    my $keys = $meta->_build_key($record);
+    my $que  = $meta->_build_que($keys);
 
     # Separate the last que for final work
     my $last_que = pop @$que;
@@ -206,7 +206,7 @@ sub save_instance {
     $object->{$last_que} = $hash;
     
     # Set the class name in the key, and return
-    $keys->{class_name} = $self->class_name;
+    $keys->{class_name} = $meta->name;
     return $keys;
 }
 
@@ -219,18 +219,20 @@ Delete the record instance from the database.
 =cut
 
 sub delete_instance {
-    my $self = shift;
+    my $meta   = shift;
+    my %params = @_;
+    my $db     = $params{db};
 
     # Bootstrap and setup the que
-    $self->init_table($self->class_name);
-    my $keys = $self->_build_key(@_);
-    my $que  = $self->_build_que($keys);
+    $meta->init_table($meta->name);
+    my $keys = $meta->_build_key(%params);
+    my $que  = $meta->_build_que($keys);
     
     # This is the final bit to delete
     my $last_que = pop @$que;
 
     # Find the place to delete from
-    my $object = $self->table( $self->class_name );
+    my $object = $db->table( $meta->name );
     for my $que_entry (@$que) {
         if (defined $object->{$que_entry}) {
             $object = $object->{$que_entry};
@@ -257,13 +259,15 @@ Fetches all the records for this object from the given L<DustyDB>.
 
 sub list_all_instances {
     my ($meta, %params) = @_;
+    my $db = $params{db};
 
     # Initialize the table in case it ain't
     $db->init_table( $meta->name );
 
     # Read the database
-    my $model = $self->table( $self->class_name );
-    my @records = map { $self->construct( %$_ ) } values %$model;
+    my $model = $db->table( $meta->name );
+    my @records = map { $meta->load_instance( db => $db, %$_ ) } 
+                  values %$model;
 
     return @records;
 }

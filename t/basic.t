@@ -21,8 +21,8 @@ has key name => ( is => 'rw', isa => 'Str' );
 package Book;
 use DustyDB::Object;
 
-has title  => ( is => 'rw', isa => 'Str' );
-has author => ( is => 'rw', isa => 'Author' );
+has key title => ( is => 'rw', isa => 'Str' );
+has author    => ( is => 'rw', isa => 'Author' );
 
 # Get down to business
 package main;
