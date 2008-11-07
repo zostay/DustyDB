@@ -1,5 +1,9 @@
-package DustyDB::Model;
+package DustyDB::Object;
 use Moose;
+
+use DustyDB::Record;
+use DustyDB::Meta::Class;
+use DustyDB::Meta::Attribute;
 
 use Moose::Exporter;
 

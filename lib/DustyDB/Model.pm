@@ -59,7 +59,6 @@ This is the meta-class for something that does L<DustyDB::Record>.
 
 has record_meta => (
     is       => 'rw',
-    isa      => 'Object',
     does     => 'DustyDB::Meta::Class',
     required => 1,
 );
