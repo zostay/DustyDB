@@ -140,7 +140,7 @@ C<$code_ref>. If a code reference is passed, this code reference is called for e
 sub _build_records {
     my $self = shift;
 
-    my @originals = $self->record_meta->list_all_instances( db => $self->db );
+    my @originals = $self->record_meta->list_all_objects( db => $self->db );
 
     # If we have a filter
     if ($self->has_filter_subroutine) {
