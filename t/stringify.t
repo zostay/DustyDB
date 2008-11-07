@@ -12,13 +12,11 @@ use_ok('DustyDB');
 
 # Declare a model
 package Rot13;
-use Moose;
-with 'DustyDB::Record';
+use DustyDB::Object;
 
-has name => (
+has key name => (
     is => 'rw',
     isa => 'Str',
-    traits => [ 'DustyDB::Key' ],
     stringify => sub {
         my $ALPHA = join '', ('A' .. 'Z');
         my $alpha = join '', ('a' .. 'z');

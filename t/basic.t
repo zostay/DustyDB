@@ -13,17 +13,15 @@ use_ok('DustyDB');
 
 # Declare a model
 package Author;
-use Moose;
-with 'DustyDB::Record';
+use DustyDB::Object;
 
-has name => ( is => 'rw', isa => 'Str',   traits => [ 'DustyDB::Key' ] );
+has key name => ( is => 'rw', isa => 'Str' );
 
 # Declare another model
 package Book;
-use Moose;
-with 'DustyDB::Record';
+use DustyDB::Object;
 
-has title  => ( is => 'rw', isa => 'Str', traits => [ 'DustyDB::Key' ] );
+has title  => ( is => 'rw', isa => 'Str' );
 has author => ( is => 'rw', isa => 'Author' );
 
 # Get down to business
@@ -45,14 +43,13 @@ isa_ok($book, 'DustyDB::Model');
 
 {
     # Create a couple records
-    my $the_damian = Author->new( model => $author, name => 'Damian Conway' );
+    my $the_damian = $author->construct( name => 'Damian Conway' );
     ok($the_damian, 'Created an author');
     isa_ok($the_damian, 'Author');
     does_ok($the_damian, 'DustyDB::Record');
     is($the_damian->name, 'Damian Conway', 'name is correct');
 
-    my $pbp        = Book->new( 
-        model  => $book,
+    my $pbp        = $book->construct( 
         title  => 'Perl Best Practices', 
         author => $the_damian,
     );

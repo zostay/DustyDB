@@ -13,10 +13,9 @@ use_ok('DustyDB');
 
 # Declare a model
 package Thing;
-use Moose;
-with 'DustyDB::Record';
+use DustyDB::Object;
 
-has name        => ( is => 'rw', isa => 'Str', traits    => [ 'DustyDB::Key' ] );
+has key name    => ( is => 'rw', isa => 'Str' );
 has description => ( is => 'rw', isa => 'Str', predicate => 'has_description' );
 
 package main;
