@@ -54,7 +54,7 @@ This method saves the object into the database and returns a key identifying the
 
 sub save {
     my $self = shift;
-    $self->model->save_instance(
+    return $self->model->save_instance(
         db     => $self->db, 
         record => $self,
         @_,
