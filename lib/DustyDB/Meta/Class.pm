@@ -27,7 +27,7 @@ has primary_key => (
 
 =head2 load_object
 
-  my $record = $meta->load_object( db => $db, %key );
+  my $record = $meta->load_object( db => $db, key => [ %$key ] );
 
 Load a record object from the given L<DustyDB> with the given key parameters.
 
@@ -37,9 +37,10 @@ sub load_object {
     my $meta   = shift;
     my %params = @_;
     my $db     = $params{db};
+    my $key    = $params{key};
 
     $db->init_table($meta->name);
-    my $keys = $meta->_build_key(%params);
+    my $keys = $meta->_build_key(@$key);
     my $que  = $meta->_build_que($keys);
     
     # Fetch the record from the database
@@ -136,13 +137,13 @@ sub _build_que {
 
 This saves the given record (an object that does L<DustyDB::Record>) to the given L<DustyDB> database. This method returns a hash referece representing a key that can be used to retrieve the object later via:
 
-  my $record = $meta->load_object( db => $db, %$key );
+  my $record = $meta->load_object( db => $db, key => [ %$key ] );
 
 =cut
 
 sub save_object {
     my $meta   = shift;
-    my %params = shift;
+    my %params = @_;
     my $db     = $params{db};
     my $record = $params{record};
 
@@ -224,7 +225,7 @@ sub delete_object {
     my $db     = $params{db};
 
     # Bootstrap and setup the que
-    $meta->init_table($meta->name);
+    $db->init_table($meta->name);
     my $keys = $meta->_build_key(%params);
     my $que  = $meta->_build_que($keys);
     

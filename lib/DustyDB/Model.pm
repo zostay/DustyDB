@@ -113,19 +113,22 @@ sub create {
 
 =head2 load
 
+  my $record = $model->load( $value );
   my $record = $model->load( %key );
 
 Given the names and values of key parameters, this will load an object from the database.
 
+If there is only a single key attribute, you may pass just a value to this method.
+
 =cut
 
 sub load {
-    my ($self, %params) = @_;
+    my $self = shift;
 
     # Load the record
     my $record = $self->record_meta->load_object(
-        db => $self->db,
-        %params,
+        db  => $self->db,
+        key => [ @_ ],
     );
 
     return $record;

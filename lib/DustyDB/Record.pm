@@ -37,9 +37,9 @@ However, if you want to construct your record class directly, you can do somethi
 =cut
 
 has db => (
-    is        => 'rw',
-    isa       => 'DustyDB',
-    required  => 1,
+    is       => 'rw',
+    isa      => 'DustyDB',
+    required => 1,
 );
 
 =head1 METHODS
@@ -54,7 +54,7 @@ This method saves the object into the database and returns a key identifying the
 
 sub save {
     my $self = shift;
-    return $self->model->save_object(
+    return $self->meta->save_object(
         db     => $self->db, 
         record => $self,
         @_,
@@ -71,7 +71,7 @@ This method delets the object from the database. This does not invalidate the ob
 
 sub delete {
     my $self = shift;
-    $self->model->delete_object(
+    $self->meta->delete_object(
         db     => $self->db,
         record => $self, 
         @_
