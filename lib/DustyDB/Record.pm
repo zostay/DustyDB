@@ -1,8 +1,5 @@
 package DustyDB::Record;
 use Moose::Role;
-use Moose::Util::MetaRole;
-
-use Scalar::Util qw( blessed );
 
 =head1 NAME
 
@@ -11,28 +8,37 @@ DustyDB::Record - role for DustyDB models
 =head1 SYNOPSIS
 
   package MyModel;
-  use Moose;
+  use DustyDB::Object;
 
-  with 'DustyDB::Record';
-
-  has name => ( is => 'rw', isa => 'Str', traits => [ 'DustyDB::Key' ] );
-  has description => ( is => 'rw', isa => 'Str' );
+  has key name => (
+      is  => 'rw',
+      isa => 'Str',
+  );
+  has description => (
+      is => 'rw',
+      isa => 'Str',
+  );
 
 =head1 DESCRIPTION
 
-Use this role on any model object you want to store in the database.
+Do not use this class directly. Use L<DustyDB::Object> instead. The attributes and methods shown here are available in any class that uses L<DustyDB::Object> because such classes do this role.
 
 =head1 ATTRIBUTES
 
-=head2 model
+=head2 db
 
-This is a required attribute that must be set to a L<DustyDB::Model> object that will be used to save this. In general, you will never need to set this yourself.
+This is a required attribute that must be set to a L<DustyDB> object that will be used to save this. In general, you will never need to set this yourself. 
+
+However, if you want to construct your record class directly, you can do something like this.
+
+  my $db = DustyDB->new( path => 'foo.db' );
+  my $object = MyModel->new( db => $db, name => 'foo', description => 'bar' );
 
 =cut
 
-has model => (
+has db => (
     is        => 'rw',
-    isa       => 'DustyDB::Model',
+    isa       => 'DustyDB',
     required  => 1,
 );
 
@@ -48,7 +54,11 @@ This method saves the object into the database and returns a key identifying the
 
 sub save {
     my $self = shift;
-    $self->model->save($self, @_);
+    $self->model->save_instance(
+        db     => $self->db, 
+        record => $self,
+        @_,
+    );
 }
 
 =head2 delete
@@ -61,12 +71,16 @@ This method delets the object from the database. This does not invalidate the ob
 
 sub delete {
     my $self = shift;
-    $self->model->delete($self, @_);
+    $self->model->delete_instance(
+        db     => $self->db,
+        record => $self, 
+        @_
+    );
 }
 
 =head1 CAVEATS
 
-When creating your models you cannot have an attribute named C<model> or an attribute named C<class_name>. The C<model> name is already taken and C<class_name> may be used when storing the data in some cases.
+When creating your models you cannot have an attribute named C<db> or an attribute named C<class_name>. The C<db> name is used directly as an attribute by this role and C<class_name> may be used when storing the data in some cases.
 
 =cut
 

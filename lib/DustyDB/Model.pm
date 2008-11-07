@@ -49,7 +49,6 @@ has db => (
     is       => 'rw',
     isa      => 'DustyDB',
     required => 1,
-    handles  => [ qw( dbm ) ],
 );
 
 =head2 record_meta
@@ -80,7 +79,7 @@ sub construct {
 
     # Create the record
     my $record = $self->record_meta->create_instance(
-        model => $self,
+        db => $self->db,
         %params,
     );
 
@@ -105,7 +104,7 @@ sub create {
 
     # Create the record and save
     my $record = $self->record_meta->create_instance(
-        model => $self,
+        db => $self->db,
         %params,
     );
     $record->save;
@@ -126,7 +125,7 @@ sub load {
 
     # Load the record
     my $record = $self->record_meta->load_instance(
-        model => $self,
+        db => $self->db,
         %params,
     );
 
@@ -174,7 +173,8 @@ sub save {
 
         # Update every attribute
         for my $attr (values %{ $self->record_meta->get_attribute_map }) {
-            next if $attr->name eq 'model';
+            # TODO use a non-saved marker role instead of this crass hack
+            next if $attr->name eq 'db';
 
             # If the parameter is defined, set it
             if (defined $params{ $attr->name }) {
