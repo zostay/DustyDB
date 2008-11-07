@@ -1,3 +1,15 @@
+0.03    2008-11-06 1:03am - Andrew Sterling Hanenkamp
+
+    * INCOMPATIBLE API CHANGES THAT BREAK EXISTING CODE
+    * No longer use Moose; with 'DustyDB::Record' syntax
+    * Define models using "use DustyDB::Object" instead
+    * Added a DustyDB::Object model
+    * Complete rewrite of DustyDB::Record and DustyDB::Model
+    * Added DustyDB::Meta::Class and DustyDB::Meta::Attribute
+    * Removed DustyDB::Filter since DustyDB::Meta::Attribute includes these
+      features for all attributes
+    * Added a handy key() method that provides sugar for DustyDB::Key
+
 0.02    2008-10-31 11:42pm - Andrew Sterling Hanenkamp
 
     * Added the stringify property to DustyDB::Key
