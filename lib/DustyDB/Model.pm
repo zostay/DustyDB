@@ -198,4 +198,23 @@ sub save {
 
 *load_and_update_or_create = *save;
 
+=head2 all
+
+=head2 all_where
+
+The L</all> and L</all_where> are synonyms. In list context, they will return a list of zero or more records. In scalar context they will return a L<DustyDB::Collection> object. These methods will accept the same arguments as the L<DustyDB::Collection/filter> method of that class.
+
+=cut
+
+sub all {
+    my $self = shift;
+
+    my $collection = DustyDB::Collection->new( model => $self );
+    $collection->filter(@_) if @_;
+
+    return $collection->contextual;
+}
+
+*all_where = *all;
+
 1;
