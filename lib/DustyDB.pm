@@ -18,18 +18,16 @@ DustyDB - yet another Moose-based object database
 
   # Declare a model
   package Book;
-  use Moose;
-  with 'DustyDB::Record';
+  use DustyDB::Object;
 
-  has title  => ( is => 'rw', isa => 'Str',   traits => [ 'DustyDB::Key' ] );
-  has author => ( is => 'rw', isa => 'Author' );
+  has key title => ( is => 'rw', isa => 'Str' );
+  has author    => ( is => 'rw', isa => 'Author' );
 
   # Declare another model
   package Author;
-  use Moose;
-  with 'DustyDB::Record';
+  use DustyDB::Object;
 
-  has name => ( is => 'rw', isa => 'Str',     traits => [ 'DustyDB::Key' ] );
+  has key name => ( is => 'rw', isa => 'Str' );
 
   # Get down to business
   package main;
@@ -85,9 +83,9 @@ DustyDB - yet another Moose-based object database
 
 =head1 DESCRIPTION
 
-Sometimes, I need to store an eeny-weeny bit of data, but I want it nicely structured with Moose, but I don't want to mess with a bunch of setup and bootstrapping and blah blah blah. I just want to write my script. This provides a mechanism to do that with very little overhead. There are very few frills either, so if you want something nicer, you'll have to build on or look into something else.
+Sometimes, I need to store an eeny-weeny bit of data, but I want it nicely structured with Moose, but I don't want to mess with a bunch of setup and bootstrapping and blah blah blah. I just want to write my script. This provides a mechanism to do that with very little overhead. There are aren't many frills either, so if you want something nicer, you'll have to build on or look into something else.
 
-All the data is stored using L<DBM::Deep>, so if you want to dig deeper into what's going on here, you can open the database using that library without going through L<DustyDB>.
+All the data is stored using L<DBM::Deep>, so if you want to dig deeper into what's going on here, you can open the database using that library without going through L<DustyDB>. Be careful though. This tool doesn't necessarily play nice if the database isn't just exactly what it expects (which is mostly a factor of how little time has gone into it so far).
 
 =head1 ATTRIBUTES
 
@@ -135,14 +133,14 @@ Given a model class name, this returns a L<DustyDB::Model>, which can be used to
 sub model {
     my $self       = shift;
     my $class_name = shift;
-    return DustyDB::Model->new( db => $self, class_name => $class_name );
+    return DustyDB::Model->new( db => $self, record_meta => $class_name->meta );
 }
 
 =head1 INTERNAL METHODS
 
 =head2 table
 
-Do not use this method unless you really need to. The regular interface is provided through L</model>. This provides access to the table of records in the database.
+Do not use this method unless you really need to. The regular interface is provided through L</model>. This provides access to the raw records in the database.
 
 =cut
 
@@ -169,7 +167,7 @@ sub init_table {
 
 =head1 MODULE NAME
 
-Why DustyDB? Well, I wanted a "dead simple database." DSD. D-S-D. Dusty. DustyDB. Lame or not, it was it is.
+Why DustyDB? Well, I wanted a "dead simple database." DSD. D-S-D. Dusty. DustyDB. Lame or not, it is what it is.
 
 =cut
 
