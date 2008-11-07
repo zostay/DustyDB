@@ -77,7 +77,7 @@ sub construct {
     my ($self, %params) = @_;
 
     # Create the record
-    my $record = $self->record_meta->create_instance(
+    my $record = $self->record_meta->new_object(
         db => $self->db,
         %params,
     );
@@ -102,7 +102,7 @@ sub create {
     my ($self, %params) = @_;
 
     # Create the record and save
-    my $record = $self->record_meta->create_instance(
+    my $record = $self->record_meta->new_oject(
         db => $self->db,
         %params,
     );
@@ -123,7 +123,7 @@ sub load {
     my ($self, %params) = @_;
 
     # Load the record
-    my $record = $self->record_meta->load_instance(
+    my $record = $self->record_meta->load_object(
         db => $self->db,
         %params,
     );

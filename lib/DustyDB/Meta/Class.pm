@@ -25,15 +25,15 @@ has primary_key => (
 
 =head1 METHODS
 
-=head2 load_instance
+=head2 load_object
 
-  my $record = $meta->load_instance( db => $db, %key );
+  my $record = $meta->load_object( db => $db, %key );
 
 Load a record object from the given L<DustyDB> with the given key parameters.
 
 =cut
 
-sub load_instance {
+sub load_object {
     my $meta   = shift;
     my %params = @_;
     my $db     = $params{db};
@@ -82,7 +82,7 @@ sub load_instance {
     }
 
     # ... and serve
-    return $meta->create_instance( %object_params );
+    return $meta->new_object( %object_params );
 }
 
 sub _build_key {
@@ -130,17 +130,17 @@ sub _build_que {
     return \@que;
 }
 
-=head2 save_instance
+=head2 save_object
 
-  my $key = $meta->save_instance( db => $db, record => $record );
+  my $key = $meta->save_object( db => $db, record => $record );
 
 This saves the given record (an object that does L<DustyDB::Record>) to the given L<DustyDB> database. This method returns a hash referece representing a key that can be used to retrieve the object later via:
 
-  my $record = $meta->load_instance( db => $db, %$key );
+  my $record = $meta->load_object( db => $db, %$key );
 
 =cut
 
-sub save_instance {
+sub save_object {
     my $meta   = shift;
     my %params = shift;
     my $db     = $params{db};
@@ -210,15 +210,15 @@ sub save_instance {
     return $keys;
 }
 
-=head2 delete_instance
+=head2 delete_object
 
-  $meta->delete_instance( db => $db, record => $record );
+  $meta->delete_object( db => $db, record => $record );
 
 Delete the record instance from the database.
 
 =cut
 
-sub delete_instance {
+sub delete_object {
     my $meta   = shift;
     my %params = @_;
     my $db     = $params{db};
@@ -249,15 +249,15 @@ sub delete_instance {
     # here might be a good idea.
 }
 
-=head2 list_all_instances
+=head2 list_all_objects
 
-  my @records = $meta->list_all_instances( db => $db );
+  my @records = $meta->list_all_objects( db => $db );
 
 Fetches all the records for this object from the given L<DustyDB>.
 
 =cut
 
-sub list_all_instances {
+sub list_all_objects {
     my ($meta, %params) = @_;
     my $db = $params{db};
 
@@ -266,7 +266,7 @@ sub list_all_instances {
 
     # Read the database
     my $model = $db->table( $meta->name );
-    my @records = map { $meta->load_instance( db => $db, %$_ ) } 
+    my @records = map { $meta->new_object( db => $db, %$_ ) } 
                   values %$model;
 
     return @records;

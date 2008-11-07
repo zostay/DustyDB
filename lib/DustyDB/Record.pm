@@ -54,7 +54,7 @@ This method saves the object into the database and returns a key identifying the
 
 sub save {
     my $self = shift;
-    return $self->model->save_instance(
+    return $self->model->save_object(
         db     => $self->db, 
         record => $self,
         @_,
@@ -71,7 +71,7 @@ This method delets the object from the database. This does not invalidate the ob
 
 sub delete {
     my $self = shift;
-    $self->model->delete_instance(
+    $self->model->delete_object(
         db     => $self->db,
         record => $self, 
         @_
