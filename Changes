@@ -1,3 +1,10 @@
+0.02    2008-10-31 11:42pm - Andrew Sterling Hanenkamp
+
+    * Added the stringify property to DustyDB::Key
+    * Added load_or_create() helper to DustyDB::Model
+    * Added load_and_update_or_create() helper to DustyDB::Model
+    * Added DustyDB::Filter
+
 0.01    2008-10-29 9:31pm - Andrew Sterling Hanenkamp
 
     * Initial release of yet another object database
