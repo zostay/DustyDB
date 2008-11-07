@@ -102,7 +102,7 @@ sub create {
     my ($self, %params) = @_;
 
     # Create the record and save
-    my $record = $self->record_meta->new_oject(
+    my $record = $self->record_meta->new_object(
         db => $self->db,
         %params,
     );

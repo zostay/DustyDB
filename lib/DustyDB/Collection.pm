@@ -57,7 +57,7 @@ has model => (
     is => 'rw',
     isa => 'DustyDB::Model',
     required => 1,
-    handles => [ qw( db recod_meta ) ],
+    handles => [ qw( db record_meta ) ],
 );
 
 =head2 filter_subroutine
@@ -184,7 +184,7 @@ sub filter {
         }
 
         # Did we get a method name?
-        elsif ($self->class_name->can($_[0])) {
+        elsif ($self->record_meta->has_method($_[0])) {
             my $method = $_[0];
 
             $self->filter_subroutine( sub {
