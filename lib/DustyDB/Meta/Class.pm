@@ -92,7 +92,7 @@ sub _build_key {
 
     # We have a record that needs to be decomposed
     if (blessed $_[0] and $_[0]->isa($meta->name)) {
-        for my $key (@{ $_[0]->meta->primary_key }) {
+        for my $key (@{ $meta->primary_key }) {
             $keys{ $key->name } 
                 = $key->perform_stringify($key->get_value($_[0]));
         }
@@ -223,10 +223,11 @@ sub delete_object {
     my $meta   = shift;
     my %params = @_;
     my $db     = $params{db};
+    my $record = $params{record};
 
     # Bootstrap and setup the que
     $db->init_table($meta->name);
-    my $keys = $meta->_build_key(%params);
+    my $keys = $meta->_build_key($record);
     my $que  = $meta->_build_que($keys);
     
     # This is the final bit to delete
