@@ -19,14 +19,13 @@ sub init_meta {
 
     Moose->init_meta(%options);
 
-    Moose::Util::apply_all_roles($options{for_class}, 'DustyDB::Record');
-    $options{for_class}->does('DustyDB::Record')
-        or die "WTF?\n";
     Moose::Util::MetaRole::apply_metaclass_roles(
         for_class                 => $options{for_class},
         metaclass_roles           => [ 'DustyDB::Meta::Class' ],
         attribute_metaclass_roles => [ 'DustyDB::Meta::Attribute' ],
     );
+
+    Moose::Util::apply_all_roles($options{for_class}, 'DustyDB::Record');
 
     return $options{for_class}->meta;
 }
