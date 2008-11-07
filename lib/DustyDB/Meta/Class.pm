@@ -1,5 +1,5 @@
 package DustyDB::Meta::Class;
-use Moose;
+use Moose::Role;
 
 use Scalar::Util qw( blessed reftype );
 
