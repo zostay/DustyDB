@@ -247,4 +247,25 @@ sub delete_instance {
     # here might be a good idea.
 }
 
+=head2 list_all_instances
+
+  my @records = $meta->list_all_instances( db => $db );
+
+Fetches all the records for this object from the given L<DustyDB>.
+
+=cut
+
+sub list_all_instances {
+    my ($meta, %params) = @_;
+
+    # Initialize the table in case it ain't
+    $db->init_table( $meta->name );
+
+    # Read the database
+    my $model = $self->table( $self->class_name );
+    my @records = map { $self->construct( %$_ ) } values %$model;
+
+    return @records;
+}
+
 1;
