@@ -200,6 +200,12 @@ sub save {
 
 *load_and_update_or_create = *save;
 
+=begin Pod::Coverage
+
+  load_and_update_or_create
+
+=end Pod::Coverage
+
 =head2 all
 
 =head2 all_where

@@ -1,6 +1,14 @@
 package DustyDB::Meta::Attribute;
 use Moose::Role;
 
+=head1 NAME
+
+DustyDB::Meta::Attribute - Moose meta-class for DustyDB::Record attributes
+
+=head1 DESCRIPTION
+
+For any model class (one that uses L<DustyDB::Object> and does L<DustyDB::Record>), all the attributes will be given this Moose meta-class role. These attributes are used to help with encoding and decoding types that might not be easily stored directly within L<DBM::Deep>.
+
 =head1 ATTRIBUTES
 
 =head2 encode

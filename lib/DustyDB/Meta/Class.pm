@@ -3,6 +3,14 @@ use Moose::Role;
 
 use Scalar::Util qw( blessed reftype );
 
+=head1 NAME
+
+DustyDB::Meta::Class - meta-class role for DustyDB::Record objects
+
+=head1 DESCRIPTION
+
+This provides a number of meta-class methods to the meta-class of DustyDB model objects, i.e., a class that uses L<DustyDB::Object> and does L<DustyDB::Record>. These methods provide lower level access to the database and should be used with caution. This part of the API is more likely to change as well.
+
 =head1 ATTRIBUTES
 
 =head2 primary_key
