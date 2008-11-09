@@ -1,9 +1,19 @@
-0.05    2008-11-09 10:35pm - Andrew Sterling Hanenkamp
+0.06    2008-11-09 4:23pm - Andrew Sterling Hanenkamp
+
+    * Added failing tests for loading record links in collections
+    * Added failing tests for multi-attribute keys in collections
+    * Added failing TODO tests for DBM file paths
+    * Fixed a bug where collections could not load objects that linked to other
+      objects stored as FKs
+    * Changed the DBM::Deep requirement since there's a bug in it that prevents
+      the tests from passing
+ 
+0.05    2008-11-08 10:35pm - Andrew Sterling Hanenkamp
 
     * Just noticed that I failed to remove DustyDB::Filter with the changes to
       the API in 0.03. This is now fixed. Thanks CPANTS.
 
-0.04    2008-11-09 10:26pm - Andrew Sterling Hanenkamp
+0.04    2008-11-08 10:26pm - Andrew Sterling Hanenkamp
 
     * Links to other models are now loaded on demand
     * Added a DustyDB::Meta::Instance class to help with deferred loading
