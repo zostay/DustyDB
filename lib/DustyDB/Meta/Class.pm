@@ -68,15 +68,20 @@ sub load_object {
     }
 
     # Bake the model
-    my %object_params = ( %$object, db => $db );
+    return $meta->_build_object( db => $db, record => $object->export );
+}
+
+sub _build_object {
+    my ($meta, %params) = @_;
+    my $db     = $params{db};
+    my $record = $params{record};
+
     for my $attr (values %{ $meta->get_attribute_map }) {
-        # TODO use a non-saved marker role instead of this crass hack
-        next if $attr->name eq 'db';
 
         # Load the value
         my $value;
-        $value = $object_params{ $attr->name } 
-            if defined $object_params{ $attr->name };
+        $value = $record->{ $attr->name } 
+            if defined $record->{ $attr->name };
 
         # If this is another record, load it first
         if (ref $value and reftype $value eq 'HASH'
@@ -87,19 +92,19 @@ sub load_object {
             my $fake = DustyDB::FakeRecord->new(
                 model      => $other_model,
                 class_name => $class_name,
-                key        => $value->export,
+                key        => $value,
             );
-            $object_params{ $attr->name } = $fake;
+            $record->{ $attr->name } = $fake;
         }
 
         # Otherwise try to decode if needed
         elsif (defined $value) {
-            $object_params{ $attr->name } = $attr->perform_decode( $value );
+            $record->{ $attr->name } = $attr->perform_decode( $value );
         }
     }
 
     # ... and serve
-    return $meta->new_object( %object_params );
+    return $meta->new_object( %$record, db => $db );
 }
 
 sub _build_key {
