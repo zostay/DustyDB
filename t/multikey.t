@@ -7,7 +7,7 @@ multikey.t - create and load some records with multi-attribute keys
 
 =cut
 
-use Test::More tests => 28;
+use Test::More tests => 37;
 use_ok('DustyDB');
 
 # Declare a multi-attribute key model
@@ -85,6 +85,19 @@ ok($point, 'got a model');
     ok($second, 'has a second point');
     is($second->x, 42, 'second.x == 42');
     is($second->y, 69, 'second.y == 69');
+}
+
+{
+    my @point = $point->all;
+    is(scalar @point, 4, 'we have 4 points');
+    is($point[0]->x, 0, 'point 0 x 0');
+    is($point[0]->y, 0, 'point 0 y 0');
+    is($point[1]->x, 0, 'point 1 x 0');
+    is($point[1]->y, 1, 'point 1 y 1');
+    is($point[2]->x, 1, 'point 2 x 1');
+    is($point[2]->y, 0, 'point 2 y 0');
+    is($point[3]->x, 42, 'point 3 x 42');
+    is($point[3]->y, 69, 'point 3 y 69');
 }
 
 unlink 't/multikey.db';
