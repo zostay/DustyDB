@@ -75,7 +75,7 @@ sub perform_decode {
 
 =head2 get_value
 
-This is enhanced to perform decoding and deferred loading of FK objects.
+This is enhanced to perform deferred loading of FK objects.
 
 =cut
 
