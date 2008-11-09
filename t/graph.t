@@ -11,29 +11,21 @@ This is a more thorough testing of foreign object relationships.
 
 =cut
 
-use Test::More tests => 1402;
+use Test::More tests => 2003;
 use_ok('DustyDB');
 
 # Declare a model
 package Square;
-use Moose;
+use DustyDB::Object;
 
-with 'DustyDB::Record';
-
-use overload 
-    'bool' => sub { defined $a },
-    '=='   => sub { $a->x == $b->x and $a->y == $b->y };
-
-has x => (
+has key x => (
     is => 'rw',
     isa => 'Int',
-    traits => [ 'DustyDB::Key' ],
 );
 
-has y => (
+has key y => (
     is => 'rw',
     isa => 'Int',
-    traits => [ 'DustyDB::Key' ],
 );
 
 has north => (
@@ -67,6 +59,7 @@ for my $x (0 .. 9) {
     for my $y (0 .. 9) {
         my $this_square = $square->create( x => $x, y => $y );
 
+        ok($this_square, 'created this square');
         is($this_square->x, $x, "this square.x = $x");
         is($this_square->y, $y, "this square.y = $y");
     }
@@ -75,6 +68,7 @@ for my $x (0 .. 9) {
 for my $x (0 .. 9) {
     for my $y (0 .. 9) {
         my $this_square = $square->load( x => $x, y => $y );
+        ok($this_square, "got this square for ($x, $y)");
 
         my $north_x = ($x + 9) % 10;
         my $east_y  = ($y + 1) % 10;
@@ -86,10 +80,10 @@ for my $x (0 .. 9) {
         my $south_square = $square->load( x => $south_x, y => $y );
         my $west_square  = $square->load( x => $x, y => $west_y );
 
-        ok($north_square, "got a north square for ($x, $y)");
-        ok($east_square,  "got an east square for ($x, $y)");
-        ok($west_square,  "got a west square for ($x, $y)");
-        ok($south_square, "got a south square for ($x, $y)");
+        ok($north_square, "got a north square for ($x, $y): ($north_x, $y)");
+        ok($east_square,  "got an east square for ($x, $y): ($x, $east_y)");
+        ok($west_square,  "got a west square for ($x, $y): ($south_x, $y)");
+        ok($south_square, "got a south square for ($x, $y): ($x, $west_y)");
 
         $this_square->north( $north_square );
         $this_square->east( $east_square );
@@ -99,6 +93,12 @@ for my $x (0 .. 9) {
     }
 }
 
+sub is_point($$$) {
+    my ($a, $b, $msg) = @_;
+    is($a->x, $b->x, $msg . " x");
+    is($a->y, $b->y, $msg . " y");
+}
+
 for my $x (0 .. 9) {
     for my $y (0 .. 9) {
         my $this_square = $square->load( x => $x, y => $y );
@@ -118,10 +118,10 @@ for my $x (0 .. 9) {
         ok($west_square,  "got a west square for ($x, $y)");
         ok($south_square, "got a south square for ($x, $y)");
 
-        is($this_square->north, $north_square, "north is north ($x, $y)");
-        is($this_square->east,  $east_square,  "east is east ($x, $y)");
-        is($this_square->south, $south_square, "south is south ($x, $y)");
-        is($this_square->west,  $west_square,  "west is west ($x, $y)");
+        is_point($this_square->north, $north_square, "north is north ($x, $y)");
+        is_point($this_square->east,  $east_square,  "east is east ($x, $y)");
+        is_point($this_square->south, $south_square, "south is south ($x, $y)");
+        is_point($this_square->west,  $west_square,  "west is west ($x, $y)");
     }
 }
 
