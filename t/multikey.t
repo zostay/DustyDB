@@ -92,10 +92,10 @@ ok($point, 'got a model');
     is(scalar @point, 4, 'we have 4 points');
     is($point[0]->x, 0, 'point 0 x 0');
     is($point[0]->y, 0, 'point 0 y 0');
-    is($point[1]->x, 0, 'point 1 x 0');
-    is($point[1]->y, 1, 'point 1 y 1');
-    is($point[2]->x, 1, 'point 2 x 1');
-    is($point[2]->y, 0, 'point 2 y 0');
+    is($point[1]->x, 1, 'point 1 x 1');
+    is($point[1]->y, 0, 'point 1 y 0');
+    is($point[2]->x, 0, 'point 2 x 0');
+    is($point[2]->y, 1, 'point 2 y 1');
     is($point[3]->x, 42, 'point 3 x 42');
     is($point[3]->y, 69, 'point 3 y 69');
 }
