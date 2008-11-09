@@ -1,7 +1,7 @@
 package DustyDB::Meta::Attribute;
 use Moose::Role;
 
-use Scalar::Util qw( reftype );
+use Scalar::Util qw( blessed );
 
 =head1 NAME
 
@@ -73,25 +73,5 @@ sub perform_decode {
     return $attr->decode->($value);
 }
 
-=head2 get_value
-
-This is enhanced to perform deferred loading of FK objects.
-
-=cut
-
-override get_value => sub {
-    my ($attr, $object) = @_;
-    my $value = super($object);
-
-    if (ref $value and reftype $value eq 'HASH' 
-            and defined $value->{class_name}) {
-
-        my $class_name = delete $value->{class_name};
-        my $model = $object->db->model($class_name);
-        $value = $model->load(%$value);
-    }
-
-    return $value;
-};
 
 1;
