@@ -1,3 +1,11 @@
+0.04    2008-11-09 10:26pm - Andrew Sterling Hanenkamp
+
+    * Links to other models are now loaded on demand
+    * Added a DustyDB::Meta::Instance class to help with deferred loading
+    * Added a DustyDB::FakeRecord class to help with deferred loading
+    * Added a graph.t test to test deferred loading
+    * Added a multikey.t test to test multi-attribute keys
+
 0.03    2008-11-06 1:03am - Andrew Sterling Hanenkamp
 
     * INCOMPATIBLE API CHANGES THAT BREAK EXISTING CODE
