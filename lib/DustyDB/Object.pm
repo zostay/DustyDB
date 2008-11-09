@@ -6,6 +6,7 @@ use Moose::Util::MetaRole;
 use DustyDB::Record;
 use DustyDB::Meta::Class;
 use DustyDB::Meta::Attribute;
+use DustyDB::Meta::Instance;
 
 use Moose::Exporter;
 
@@ -47,6 +48,7 @@ sub init_meta {
         for_class                 => $options{for_class},
         metaclass_roles           => [ 'DustyDB::Meta::Class' ],
         attribute_metaclass_roles => [ 'DustyDB::Meta::Attribute' ],
+        instance_metaclass_roles  => [ 'DustyDB::Meta::Instance' ],
     );
 
     Moose::Util::apply_all_roles($options{for_class}, 'DustyDB::Record');
