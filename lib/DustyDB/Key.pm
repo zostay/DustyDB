@@ -29,8 +29,6 @@ This may be defined as a reference to a subroutine to be used to translate a non
      stringify => sub { $_->iso8601 },
   );
 
-You may also want to use this in combination with L<DustyDB::Filter> to provide encoders and decoders for your object.
-
 =cut
 
 has stringify => (

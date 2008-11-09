@@ -5,7 +5,6 @@ use MooseX::Types::Path::Class;
 use DBM::Deep;
 
 use DustyDB::Key;
-use DustyDB::Filter;
 use DustyDB::Model;
 use DustyDB::Record;
 use DustyDB::Collection;
