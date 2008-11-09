@@ -287,10 +287,11 @@ sub list_all_objects {
     $db->init_table( $meta->name );
 
     # Just return now if the table is empty
-    return () unless values %{ $db->table( $meta->name ) };
+    my $table = $db->table( $meta->name );
+    return () unless scalar %$table;
 
     # Setup the initial structure before delving deeper
-    my @records = values %{ $db->table( $meta->name ) };
+    my @records = values %$table;
     my @primary_key = @{ $meta->primary_key };
     pop @primary_key;
 
