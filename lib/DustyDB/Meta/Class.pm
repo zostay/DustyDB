@@ -286,12 +286,23 @@ sub list_all_objects {
     # Initialize the table in case it ain't
     $db->init_table( $meta->name );
 
-    # Read the database
-    my $model = $db->table( $meta->name );
-    my @records = map { $meta->new_object( db => $db, %$_ ) } 
-                  values %$model;
+    # Just return now if the table is empty
+    return () unless values %{ $db->table( $meta->name ) };
 
-    return @records;
+    # Setup the initial structure before delving deeper
+    my @records = values %{ $db->table( $meta->name ) };
+    my @primary_key = @{ $meta->primary_key };
+    pop @primary_key;
+
+    # For multi-attribute keys, delve deeper until we run out of keys
+    for my $attr (@primary_key) {
+        @records = map { defined $_ ? values %$_ : () } @records;
+    }
+
+    # Convert keys to records
+    my @objects = map { $meta->_build_object( db => $db, record => $_->export ) } @records;
+
+    return @objects;
 }
 
 1;
