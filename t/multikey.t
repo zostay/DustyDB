@@ -86,3 +86,5 @@ ok($point, 'got a model');
     is($second->x, 42, 'second.x == 42');
     is($second->y, 69, 'second.y == 69');
 }
+
+unlink 't/multikey.db';

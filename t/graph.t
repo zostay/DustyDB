@@ -125,3 +125,4 @@ for my $x (0 .. 9) {
     }
 }
 
+unlink 't/graph.db';
