@@ -7,7 +7,7 @@ collection.t - test of collections of records
 
 =cut
 
-use Test::More tests => 34;
+use Test::More tests => 64;
 use Test::Moose;
 use_ok('DustyDB');
 
@@ -46,7 +46,7 @@ isa_ok($thing2, 'DustyDB::Model');
     $thing1->create( name => 'test3' );
 
     $thing2->create( name => 'test1', thing1 => $thing1->load('test1') );
-    $thing2->create( name => 'test2', thing2 => $thing1->load('test2') );
+    $thing2->create( name => 'test2', thing1 => $thing1->load('test2') );
     $thing2->create( name => 'test3' );
 }
 
@@ -75,9 +75,9 @@ isa_ok($thing2, 'DustyDB::Model');
     is($thing2s[0]->thing1->name, $thing1s[0]->name, 'thing2 matches thing1 test1');
     is($thing2s[1]->name, 'test2', 'thing2 2 is test2');
     ok($thing2s[1]->thing1, 'thing2 has a thing1');
-    is($thing2s[1]->thing1->name, $thing1s[0]->name, 'thing2 matches thing1 test2');
+    is($thing2s[1]->thing1->name, $thing1s[1]->name, 'thing2 matches thing1 test2');
     is($thing2s[2]->name, 'test3', 'thing2 3 is test3');
-    ok(!$thing2s[1]->thing1, 'thing2 does not have a thing1');
+    ok(!$thing2s[2]->thing1, 'thing2 does not have a thing1');
 }
 
 # Get a iterator of things
@@ -105,13 +105,13 @@ isa_ok($thing2, 'DustyDB::Model');
     is($thing2s->next->name, 'test1', 'next thing is test1');
     is($thing2s->next->name, 'test2', 'next thing is test2');
     is($thing2s->next->name, 'test3', 'next thing is test3');
-    is($thing1s->next, undef, 'iterator end');
+    is($thing2s->next, undef, 'iterator end');
 
     ok($thing2s->next->thing1, 'next thing2 has a thing1');
     ok($thing2s->next->thing1, 'next thing2 has a thing1');
     ok(!$thing2s->next->thing1, 'next thing2 does not have a thing1');
-    is($thing1s->next, undef, 'iterator end');
-    is($thing1s->next->name, 'test1', 'iterator restart');
+    is($thing2s->next, undef, 'iterator end');
+    is($thing2s->next->name, 'test1', 'iterator restart');
 }
 
 # Try a filter in all()
