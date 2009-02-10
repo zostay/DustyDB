@@ -301,7 +301,8 @@ sub list_all_objects {
     }
 
     # Convert keys to records
-    my @objects = map { $meta->_build_object( db => $db, record => $_->export ) } @records;
+    my @objects = map  { $meta->_build_object( db => $db, record => $_->export ) } 
+                  grep { defined $_ } @records;
 
     return @objects;
 }
