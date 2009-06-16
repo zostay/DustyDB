@@ -3,6 +3,9 @@ use Moose;
 use Moose::Util;
 use Moose::Util::MetaRole;
 
+use Carp ();
+
+use DustyDB::Index::PrimaryKey;
 use DustyDB::Record;
 use DustyDB::Meta::Class;
 use DustyDB::Meta::Attribute;
@@ -11,7 +14,7 @@ use DustyDB::Meta::Instance;
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
-    as_is => [ 'key' ],
+    as_is => [ 'primary_key', 'key' ],
     also  => 'Moose',
 );
 
@@ -58,7 +61,32 @@ sub init_meta {
 
 =head1 METHODS
 
+=head2 primary_key
+
+TODO Add documentation
+
+=cut
+
+sub primary_key(@) {
+    my (@columns) = @_;
+
+    my $package = caller;
+    my @fields = map { 
+        $package->meta->get_attribute($_) 
+            or Carp::croak(qq{Could not find attribute named "$_" for primary key.})
+    } @columns;
+
+    # TODO This *should* be creating the PrimaryKey object, but since I've
+    # left backwards compatible support for key() for the time being...
+
+    my $primary_key = $package->meta->indexes->[0];
+    push @{ $primary_key->fields }, @fields;
+    return $primary_key;
+}
+
 =head2 key
+
+B<DEPRECATED.> See L</primary_key>.
 
   has key foo => ( is => 'rw', isa => 'Str' );
 
@@ -69,13 +97,20 @@ This provides some sugar for defining the key fields of your model. The above is
 =cut
 
 sub key($%) {
+    Carp::cluck(
+        'The "key" subroutine is deprecated and will be removed in the '
+        . 'future. Use "primary_key" instead.'
+    );
+
     my ($column, %params) = @_;
+
     if ($params{traits}) {
         push @{ $params{traits} }, 'DustyDB::Key';
     }
     else {
         $params{traits} = [ 'DustyDB::Key' ];
     }
+
     return ($column, %params);
 }
 

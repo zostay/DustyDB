@@ -217,9 +217,10 @@ The L</all> and L</all_where> are synonyms. In list context, they will return a 
 sub all {
     my $self = shift;
 
-    my $collection = DustyDB::Collection->new( model => $self );
-    $collection->filter(@_) if @_;
+    my $query = DustyDB::Query->new( model => $self );
+    $query->where( @_ );
 
+    my $collection = $query->execute;
     return $collection->contextual;
 }
 

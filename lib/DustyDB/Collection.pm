@@ -39,62 +39,150 @@ DustyDB::Collection - collections of records
 
 =head1 DESCRIPTION
 
-This class encapsulates a collection of records stored in DustyDB.
+This class encapsulates a collection of records stored in DustyDB and provides tools to iterate over those records.
 
-=head1 ATTRIBUTES
+=head1 GUTS
 
-=head2 model
+Here's some extra information on how this works. You don't need this knowledge to make use of collections, but it helps to explain how to improve performance.
 
-This is the model that the collection belongs to.
+A collection first collects a selection of records from the database using a searcher subroutine. This is a query of objects from the database based upon the available indexes and primary key. If no index is available to be used for search, then all records will be selected for placement within the collection. They aren't actually pulled until we begin to iterate.
 
-=head2 class_name
+Each record that is pulled from the database may then be filtered. If a filter subroutine is needed to finish selection, the object will be constructed and the filter will be run on the object to determine if it should be a part of the collection. Any object that matches the filter is kept. Anything else is thrown away.
 
-This is the class name of the record objects.
+=head2 GUTS EXAMPLE 1: SEARCHER ONLY
 
+  package Person;
+  use DustyDB::Object;
+
+  has key last_name => ( is => 'rw', isa => 'Str' );
+  has key first_name => ( is => 'rw', isa => 'Str' );
+  has age => ( is => 'rw', isa => 'Int' );
+
+  package main;
+  use DustyDB;
+
+  my $db = DustyDB->new(...);
+  my $model = $db->model('Person');
+
+  my $collection = $model->all( last_name => 'Dent' );
+
+In this case, the collection will load all the C<Person> objects using the primary key since the C<last_name> is the first part of the primary key.
+
+=head2 GUTS EXAMPLE 2: SEARCHER AND FILTER
+
+  # Using the same model as in Example 1
+  my $collection = $model->all( last_name => 'Dent', age => 42 );
+
+This time, the collection will pull all the records based upon the primary key as before, but will then have to filter every object returned to see if the C<age> attribute is set to 42.
+
+=head2 GUTS EXAMPLE 3: FILTER ONLY
+
+  # Using the same model as in Example 
+  my $collection = $model->all( age => 42 );
+
+There's no primary key or index that will help here, so every Person will be pulled from the database, constructed, and then filtered. This will be the most costly search of these examples.
+
+=head2 EXPLAIN
+
+If you aren't sure what's going on, the collection class does provide a tool to help you figure it out. It is provided in the L</explain> method.
+
+For example,
+
+  # Assuming the same model as in example 1 above
+  use Data::Dumper;
+  my $collection = $model->all( 
+      first_name => 'Arthur',
+      last_name  => 'Dent', 
+      age        => 42,
+  );
+  print Dumper( $collection->explain );
+
+This will output:
+
+  $VAR1 = {
+            'filter' => [
+                          'age'
+                        ],
+            'search' => {
+                          'primary_key' => [
+                                             'last_name',
+                                             'first_name'
+                                           ]
+                        }
+          };
+
+This tells you that the searcher will use the primary key to lookup the C<last_name> and C<first_name> as part of the search phase and then filter on C<age>.
+
+# =head1 ATTRIBUTES
+# 
+# =head2 model
+# 
+# This is the L<DustyDB::Model> used to construct objects within 
+# this collection.
+# 
+# =head2 db
+# 
+# This is a link back to the L<DustyDB> object.
+# 
+# =head2 record_meta
+# 
+# This is the meta class for the L<DustyDB::Record>.
+ 
 =cut
 
 has model => (
-    is => 'rw',
-    isa => 'DustyDB::Model',
+    is       => 'rw',
+    isa      => 'DustyDB::Model',
     required => 1,
-    handles => [ qw( db record_meta ) ],
+    handles  => [ qw( db record_meta ) ],
 );
 
-=head2 filter_subroutine
+# =head2 searcher_subroutine
+#
+# This contains a reference to the subroutine that is used to find records to
+# place within the 
 
-Do B<not> use this directly. See L</filter> instead. This contains a reference to the subroutine that is used to filter the records (if any).
-
-=head2 has_filter_subroutine
-
-This is a predicate that returns true if L</filter_subroutine> is set.
-
-=cut
+# =head2 filter_subroutine
+# 
+# This contains a reference to the subroutine that is used to 
+# filter the records (if any). This is a read-only accessor.
+# 
+# =head2 has_filter_subroutine
+# 
+# This is a predicate that returns true if L</filter_subroutine> 
+# is set.
+# 
+# =cut
 
 has filter_subroutine => (
-    is => 'rw',
-    isa => 'CodeRef',
+    is        => 'ro',
+    isa       => 'CodeRef',
     predicate => 'has_filter_subroutine',
 );
 
-=head2 records
-
-This is the list of records that belong to this collection.
-
-=cut
+# =head2 records
+# 
+# This is the cached list of records that have been found to 
+# belong to this collection. This list is built as we iterate 
+# through the collection (or possibly all at once if 
+# L</contextual> is called). As such, this isn't realy a very 
+# useful accessor, see L</contextual> instead.
+# 
+# =cut
 
 has records => (
-    is => 'rw',
+    is => 'ro',
     isa => 'ArrayRef',
-    lazy => 1,
-    auto_deref => 1,
-    default => \&_build_records,
+    required => 1,
+    default => sub { [] },
 );
 
-=head2 iterator_index
-
-Do B<not> use this directly. See L</next> instead. This is the internal pointer into the L</records> array.
-
-=cut
+# =head2 iterator_index
+# 
+# Do B<not> use this directly. See L</next> instead. This is the 
+# internal pointer into the L</records> array.
+# 
+# =cut
 
 has iterator_index => (
     is => 'rw',
@@ -217,7 +305,7 @@ sub _hash_to_filter {
     for my $name (keys %params) {
 
         # Don't filter if we can't filter
-        Carp::croak "$name is not an attribute of ", $self->class_name
+        Carp::croak "$name is not an attribute of ", $self->record_meta->name
             unless defined $attrs->{ $name };
     }
 

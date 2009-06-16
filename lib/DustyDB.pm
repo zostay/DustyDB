@@ -7,6 +7,8 @@ use DBM::Deep;
 use DustyDB::Key;
 use DustyDB::Model;
 use DustyDB::Record;
+use DustyDB::Index::PrimaryKey;
+use DustyDB::Query;
 use DustyDB::Collection;
 
 =head1 NAME

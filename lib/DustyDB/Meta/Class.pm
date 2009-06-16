@@ -1,8 +1,11 @@
 package DustyDB::Meta::Class;
 use Moose::Role;
+use Moose::Util::TypeConstraints;
 
+use List::MoreUtils qw( all );
 use Scalar::Util qw( blessed reftype );
 
+use DustyDB::Index::PrimaryKey;
 use DustyDB::FakeRecord;
 
 =head1 NAME
@@ -15,23 +18,54 @@ This provides a number of meta-class methods to the meta-class of DustyDB model 
 
 =head1 ATTRIBUTES
 
-=head2 primary_key
+=head2 indexes
 
-This is currently implemented as an attribute. This might change in the future. This assumes that the primary key will not change at runtime (which is probably a pretty good assumption).
+This is a list of index objects, implementing the L<DustyDB::Index> role, that can be used to retrieve records from this table.
 
 =cut
 
-has primary_key => (
-    is       => 'rw',
-    isa      => 'ArrayRef',
+type Indexes =>
+#subtype Indexes =>
+#    as 'ArrayRef',
+    where { 
+        reftype($_) eq 'ARRAY'
+            and all { $_->does('DustyDB::Index') } @$_
+    },
+    message { "The value $_ is not an array of indexes." };
+
+has indexes => (
+    is       => 'ro',
+#    isa      => 'Indexes',
+    isa      => 'ArrayRef[DustyDB::Index]',
     lazy     => 1,
-    required => 1,
-    default  => sub {
-        my $self  = shift;
-        my @attr = values %{ $self->get_attribute_map };
-        return [ grep { $_->does('DustyDB::Key') } @attr ];
+    default  => sub { 
+        # TODO This *should* be empty, but we leave it here until
+        # DustyDB::Object::key is eliminated
+        [
+            DustyDB::Index::PrimaryKey->new( record_meta => shift ),
+        ]
     },
 );
+
+has index_map => (
+    is      => 'ro',
+    isa     => 'HashRef[DustyDB::Index]',
+    lazy    => 1,
+    default => sub { 
+        my $self = shift; 
+        { map { $_->name => $_ } @{ $self->indexes } } 
+    },
+);
+
+sub primary_key {
+    my $self = shift;
+    return $self->indexes->[0];
+}
+
+sub get_index {
+    my ($self, $name) = @_;
+    $self->index_map->{$name};
+}
 
 =head1 METHODS
 
@@ -47,31 +81,14 @@ sub load_object {
     my $meta   = shift;
     my %params = @_;
     my $db     = $params{db};
-    my $key    = $params{key};
 
     $db->init_table($meta->name);
-    my $keys = $meta->_build_key(@$key);
-    my $que  = $meta->_build_que($keys);
-    
-    # Fetch the record from the database
-    my $object = $db->table( $meta->name );
-    for my $que_entry (@$que) {
-        return unless ref $object and reftype $object eq 'HASH';
-
-        if (defined $object->{$que_entry}) {
-            $object = $object->{$que_entry};
-        }
-
-        else {
-            return;
-        }
-    }
-
-    # Bake the model
-    return $meta->_build_object( db => $db, record => $object->export );
+    my $record = $meta->primary_key->load_record(@_);
+    return unless defined $record;
+    return $meta->build_object( db => $db, record => $record );
 }
 
-sub _build_object {
+sub build_object {
     my ($meta, %params) = @_;
     my $db     = $params{db};
     my $record = $params{record};
@@ -107,51 +124,6 @@ sub _build_object {
     return $meta->new_object( %$record, db => $db );
 }
 
-sub _build_key {
-    my $meta = shift;
-    my %keys;
-
-    # We have a record that needs to be decomposed
-    if (blessed $_[0] and $_[0]->isa($meta->name)) {
-        for my $key (@{ $meta->primary_key }) {
-            $keys{ $key->name } 
-                = $key->perform_stringify($key->get_value($_[0]));
-        }
-    }
-
-    # A single argument and a single column key
-    elsif (@_ == 1 and @{ $meta->primary_key } == 1) {
-        my $key = $meta->primary_key->[0];
-        $keys{ $key->name } = $key->perform_stringify($_[0]);
-    }
-    
-    # A multi-column key must be given with a hashref
-    else {
-        my %params = @_;
-        for my $key (@{ $meta->primary_key }) {
-            $keys{ $key->name } 
-                = $key->perform_stringify($params{ $key->name });
-        }
-    }
-
-    return \%keys;
-}
-
-sub _build_que {
-    my $meta = shift;
-    my $keys = shift;
-
-    # Setup the lookup que
-    my @que;
-    for my $key (@{ $meta->primary_key }) {
-        confess qq(cannot store when column "@{[ $key->name ]}" is undefined.\n)
-            if not defined $keys->{ $key->name };
-        push @que, $keys->{ $key->name };
-    }
-
-    return \@que;
-}
-
 =head2 save_object
 
   my $key = $meta->save_object( db => $db, record => $record );
@@ -170,8 +142,8 @@ sub save_object {
 
     # Bootstrap if we need to and setup the que
     $db->init_table($meta->name);
-    my $keys = $meta->_build_key($record);
-    my $que  = $meta->_build_que($keys);
+    my $keys = $meta->primary_key->build_key($record);
+    my $que  = $meta->primary_key->build_que($keys);
 
     # Separate the last que for final work
     my $last_que = pop @$que;
@@ -215,7 +187,7 @@ sub save_object {
 
         # If this is another record, just store the key
         if (blessed $value and $value->can('does') and $value->does('DustyDB::Record')) {
-            $hash->{ $attr->name } = $value->meta->_build_key($value);
+            $hash->{ $attr->name } = $value->meta->primary_key->build_key($value);
             $hash->{ $attr->name }{class_name} = $value->meta->name;
         }
 
@@ -247,8 +219,8 @@ sub delete_object {
 
     # Bootstrap and setup the que
     $db->init_table($meta->name);
-    my $keys = $meta->_build_key($record);
-    my $que  = $meta->_build_que($keys);
+    my $keys = $meta->primary_key->build_key($record);
+    my $que  = $meta->primary_key->build_que($keys);
     
     # This is the final bit to delete
     my $last_que = pop @$que;
@@ -301,7 +273,7 @@ sub list_all_objects {
     }
 
     # Convert keys to records
-    my @objects = map  { $meta->_build_object( db => $db, record => $_->export ) } 
+    my @objects = map  { $meta->build_object( db => $db, record => $_->export ) } 
                   grep { defined $_ } @records;
 
     return @objects;
