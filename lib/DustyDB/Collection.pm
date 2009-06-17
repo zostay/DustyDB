@@ -431,7 +431,7 @@ You probably won't need to call this yourself. It basically makes the switch bet
 
 sub contextual {
     my $self = shift;
-    return wantarray ? $self->records : $self;
+    return wantarray ? @{ $self->records } : $self;
 }
 
 1;
