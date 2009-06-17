@@ -214,7 +214,7 @@ sub execute {
                               @$filter;
 
         KEY: for my $key (@keys) {
-            my $object = $meta->load_object( db => $db, key => $key );
+            my $object = $meta->load_object( db => $db, key => [ $key ]);
             
             for my $filter_key (@filter_keys) {
                 while (my ($field, $value) = each %$filter_key) {
@@ -230,7 +230,6 @@ sub execute {
         model   => $self->model,
         records => \@objects,
     )->contextual;
-
 }
 
 1;
