@@ -8,7 +8,7 @@ explain.t - make sure query explaination works
 
 =cut
 
-use Test::More tests => 10;
+use Test::More tests => 11;
 use Test::Moose;
 use_ok('DustyDB');
 
@@ -36,7 +36,21 @@ my $person = $db->model('Person');
     my $query = DustyDB::Query->new( model => $person );
     my $explanation = $query->explain;
 
-    is_deeply($explanation, [], 'explanation is empty');
+    is_deeply($explanation, [{
+        search => { primary_key => [] },
+        filter => [],
+    }], 'explanation is empty');
+}
+
+{
+    my $query = DustyDB::Query->new( model => $person );
+    $query->where;
+    my $explanation = $query->explain;
+
+    is_deeply($explanation, [{
+        search => { primary_key => [] },
+        filter => [],
+    }], 'explanation is still empty');
 }
 
 {

@@ -15,15 +15,19 @@ use_ok('DustyDB');
 package Thing1;
 use DustyDB::Object;
 
-has key name    => ( is => 'rw', isa => 'Str' );
+has name    => ( is => 'rw', isa => 'Str' );
 has description => ( is => 'rw', isa => 'Str', predicate => 'has_description' );
+
+primary_key qw( name );
 
 # and another
 package Thing2;
 use DustyDB::Object;
 
-has key name => ( is => 'rw', isa => 'Str' );
+has name => ( is => 'rw', isa => 'Str' );
 has thing1   => ( is => 'rw', isa => 'Thing1' );
+
+primary_key qw( name );
 
 package main;
 
