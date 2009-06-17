@@ -220,8 +220,7 @@ sub all {
     my $query = DustyDB::Query->new( model => $self );
     $query->where( @_ );
 
-    my $collection = $query->execute;
-    return $collection->contextual;
+    return $query->execute;
 }
 
 *all_where = *all;
