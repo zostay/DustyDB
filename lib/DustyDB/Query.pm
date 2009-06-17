@@ -34,6 +34,9 @@ has disjunctions => (
 sub where {
     my ($self, @clause) = @_;
 
+    # if we aren't given any limits, this is a no-op
+    return unless @clause;
+
     my $iter = natatime(3, @clause);
     while (my ($field, $op, $value) = $iter->()) {
         if ($op ne '=') {
@@ -162,6 +165,14 @@ sub explain {
         push @explanation => {
             search => \%search,
             filter => $filters,
+        };
+    }
+
+    # If there's not explanation, we want everything, which is explained as...
+    if (!@explanation) {
+        push @explanation => {
+            search => { primary_key => [] },
+            filter => [],
         };
     }
 
