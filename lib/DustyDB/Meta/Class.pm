@@ -47,7 +47,7 @@ has index_map => (
     lazy    => 1,
     default => sub { 
         my $self = shift; 
-        { map { $_->name => $_ } @{ $self->indexes } } 
+        +{ map { $_->name => $_ } @{ $self->indexes } } 
     },
 );
 
