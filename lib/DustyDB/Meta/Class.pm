@@ -38,13 +38,7 @@ has indexes => (
 #    isa      => 'Indexes',
     isa      => 'ArrayRef[DustyDB::Index]',
     lazy     => 1,
-    default  => sub { 
-        # TODO This *should* be empty, but we leave it here until
-        # DustyDB::Object::key is eliminated
-        [
-            DustyDB::Index::PrimaryKey->new( record_meta => shift ),
-        ]
-    },
+    default  => sub {[]},
 );
 
 has index_map => (

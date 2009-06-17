@@ -10,29 +10,12 @@ has '+name' => (
     default => 'primary_key',
 );
 
-has '+fields' => (
-    default => sub { [] },
-);
-
 my $x = 1;
 sub BUILD {
     my $self = shift;
     
-    if (scalar @{ $self->fields } == 0) {
-
-        # TODO This ridiculous code is only here until DustyDB::Object::key is
-        # dropped entirely.
-
-        my $meta  = $self->record_meta;
-        my @attr = values %{ $meta->get_attribute_map };
-        $self->meta->get_attribute('fields')
-            ->set_value($self, [ grep { $_->does('DustyDB::Key') } @attr ]);
-    }
-
-    else {
-        for my $field (@{ $self->fields }) {
-            Moose::Util::apply_all_roles($field, 'DustyDB::Key');
-        }
+    for my $field (@{ $self->fields }) {
+        Moose::Util::apply_all_roles($field, 'DustyDB::Key');
     }
 }
 

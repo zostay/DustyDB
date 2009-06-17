@@ -76,42 +76,29 @@ sub primary_key(@) {
             or Carp::croak(qq{Could not find attribute named "$_" for primary key.})
     } @columns;
 
-    # TODO This *should* be creating the PrimaryKey object, but since I've
-    # left backwards compatible support for key() for the time being...
-
-    my $primary_key = $package->meta->indexes->[0];
-    push @{ $primary_key->fields }, @fields;
+    my $primary_key = DustyDB::Index::PrimaryKey->new( 
+        record_meta => $package->meta,
+        fields      => \@fields,
+    );
+    push @{ $package->meta->indexes }, $primary_key;
     return $primary_key;
 }
 
 =head2 key
 
-B<DEPRECATED.> See L</primary_key>.
+B<REMOVED.> See L</primary_key>. At one time you could:
 
   has key foo => ( is => 'rw', isa => 'Str' );
 
-This provides some sugar for defining the key fields of your model. The above is essentially the same as:
+But now you:
 
-  has foo => ( is => 'rw', isa => 'Str', traits => [ 'DustyDB::Key' ] );
+  has foo => ( is => 'rw', isa => 'Str' );
+  primary_key qw( foo );
 
 =cut
 
 sub key($%) {
-    Carp::cluck(
-        'The "key" subroutine is deprecated and will be removed in the '
-        . 'future. Use "primary_key" instead.'
-    );
-
-    my ($column, %params) = @_;
-
-    if ($params{traits}) {
-        push @{ $params{traits} }, 'DustyDB::Key';
-    }
-    else {
-        $params{traits} = [ 'DustyDB::Key' ];
-    }
-
-    return ($column, %params);
+    Carp::croak('The "key" subroutine has been removed. Use "primary_key" instead.');
 }
 
 1;
