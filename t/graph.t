@@ -18,12 +18,12 @@ use_ok('DustyDB');
 package Square;
 use DustyDB::Object;
 
-has key x => (
+has x => (
     is => 'rw',
     isa => 'Int',
 );
 
-has key y => (
+has y => (
     is => 'rw',
     isa => 'Int',
 );
@@ -47,6 +47,8 @@ has west => (
     is => 'rw',
     isa => 'Square',
 );
+
+primary_key qw( x y );
 
 package main;
 

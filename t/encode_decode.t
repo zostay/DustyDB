@@ -24,12 +24,14 @@ sub rot13 {
     $_
 }
 
-has key name => (
+has name => (
     is     => 'rw',
     isa    => 'Str',
     encode => \&rot13,
     decode => \&rot13,
 );
+
+primary_key qw( name );
 
 package main;
 

@@ -14,7 +14,7 @@ use_ok('DustyDB');
 package Rot13;
 use DustyDB::Object;
 
-has key name => (
+has name => (
     is => 'rw',
     isa => 'Str',
     stringify => sub {
@@ -27,6 +27,8 @@ has key name => (
         $_
     },
 );
+
+primary_key qw( name );
 
 package main;
 

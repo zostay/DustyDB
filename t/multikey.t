@@ -14,12 +14,12 @@ use_ok('DustyDB');
 package Point;
 use DustyDB::Object;
 
-has key x => (
+has x => (
     is => 'rw',
     isa => 'Int',
 );
 
-has key y => (
+has y => (
     is => 'rw',
     isa => 'Int',
 );
@@ -33,6 +33,8 @@ has foo => (
     is => 'rw',
     isa => 'Point',
 );
+
+primary_key qw( x y );
 
 package main;
 
