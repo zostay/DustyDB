@@ -348,7 +348,7 @@ Returns the number of records matched by the filter (or number of records total 
 
 sub count {
     my $self = shift;
-    my @records = $self->records;
+    my @records = @{ $self->records };
     return scalar @records;
 }
 
