@@ -77,8 +77,10 @@ sub build_key {
     else {
         my %params = @_;
         for my $key (@{ $self->fields }) {
-            $keys{ $key->name } 
-                = $key->perform_stringify($params{ $key->name });
+            if (exists $params{ $key->name }) {
+                $keys{ $key->name } 
+                    = $key->perform_stringify($params{ $key->name });
+            }
         }
     }
 

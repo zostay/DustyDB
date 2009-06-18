@@ -2,6 +2,7 @@ package DustyDB::Index::PrimaryKey;
 use Moose;
 
 use Carp ();
+use List::Util qw( max );
 use Scalar::Util qw( reftype );
 
 with qw( DustyDB::Index );
@@ -62,7 +63,7 @@ sub lookup_keys {
     return [ $key ] if $self->complete_key(keys %$key);
 
     # Find the incomplete keys and try to find all possible completions
-    my $incomplete_key = $self->build_key($key);
+    my $incomplete_key = $self->build_key(%$key);
     my $incomplete_que = $self->build_que($incomplete_key);
 
     # Load the key up to the point we've been given
@@ -73,7 +74,7 @@ sub lookup_keys {
     return [] unless defined $object;
 
     # Tells us how deep we need to go to complete the keys we have
-    my @field_indexes = scalar(@{ $incomplete_que }) - 1 
+    my @field_indexes = max(0, scalar(@{ $incomplete_que }) - 1)
                      .. scalar(@{ $self->fields }) - 1;
 
     # Iterate over the remaining fields to create complete keys
